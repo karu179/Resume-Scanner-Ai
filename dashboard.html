@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Resume Analysis Results - AI Resume Scanner</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    body { font-family: 'Inter', sans-serif; }
+    .score-ring { stroke-dasharray: 251; stroke-dashoffset: calc(251 - (var(--score, 0) * 2.51)); }
+    .severity-high { background: linear-gradient(90deg, #EF4444, #F87171); }
+    .severity-medium { background: linear-gradient(90deg, #F59E0B, #FBBF24); }
+    .severity-low { background: linear-gradient(90deg, #10B981, #34D399); }
+  </style>
+</head>
+<body class="bg-gray-50 min-h-screen">
+  <!-- Header -->
+  <nav class="bg-white shadow-sm border-b">
+    <div class="container mx-auto px-4 py-4">
+      <div class="flex items-center justify-between">
+        <h1 class="text-2xl font-bold text-navy">AI Resume Scanner</h1>
+        <a href="index.html" class="text-navy font-medium hover:text-teal transition">← New Scan</a>
+      </div>
+    </div>
+  </nav>
+
+  <div class="container mx-auto px-4 py-12">
+    <div id="loading" class="text-center py-20">
+      <div class="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-teal"></div>
+      <p class="mt-4 text-gray-600">Analyzing your resume...</p>
+    </div>
+
+    <div id="results" class="hidden">
+      <!-- Overall Score -->
+      <div class="text-center mb-16">
+        <div class="inline-flex items-center gap-4 bg-white rounded-3xl p-8 shadow-xl max-w-md mx-auto">
+          <div class="score-ring-container w-32 h-32 relative">
+            <svg class="w-32 h-32" viewBox="0 0 100 100">
+              <circle cx="50" cy="50" r="40" fill="none" stroke="#E5E7EB" stroke-width="8"/>
+              <circle cx="50" cy="50" r="40" fill="none" stroke="url(#scoreGradient)" stroke-width="8" stroke-linecap="round" class="score-ring"/>
+              <defs>
+                <linearGradient id="scoreGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+                  <stop offset="0%" stop-color="#00A99D"/>
+                  <stop offset="100%" stop-color="#E6B800"/>
+                </linearGradient>
+              </defs>
+            </svg>
+            <div class="absolute inset-0 flex flex-col items-center justify-center">
+              <div class="text-4xl font-bold text-navy" id="overallScore">82</div>
+              <div class="text-lg font-medium text-gray-600">/100</div>
+            </div>
+          </div>
+          <div>
+            <h2 class="text-3xl font-bold text-navy mb-2" id="scoreLabel">Great Start!</h2>
+            <p class="text-gray-600" id="scoreDesc">Your resume passes most ATS systems.</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Subscores -->
+      <div class="grid md:grid-cols-3 gap-6 mb-16">
+        <div class="bg-white p-8 rounded-2xl shadow-lg">
+          <h3 class="font-semibold text-navy mb-4">ATS Score</h3>
+          <div class="flex items-center gap-4">
+            <div class="score-ring-container w-20 h-20 relative">
+              <svg class="w-20 h-20" viewBox="0 0 100 100">
+                <circle cx="50" cy="50" r="35" fill="none" stroke="#E5E7EB" stroke-width="10"/>
+                <circle cx="50" cy="50" r="35" fill="none" stroke="#10B981" stroke-width="10" class="score-ring"/>
+              </svg>
+              <div class="absolute inset-0 flex items-center justify-center font-bold text-2xl text-navy">85</div>
+            </div>
+            <span class="text-3xl font-bold text-navy">85%</span>
+          </div>
+        </div>
+        <!-- Repeat for other scores -->
+      </div>
+
+      <!-- Issues -->
+      <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-6 mb-16">
+        <div class="md:col-span-2">
+          <h3 class="text-2xl font-bold text-navy mb-6">Prioritized Fixes</h3>
+          <div id="issuesList" class="space-y-4">
+            <!-- Dynamic issues -->
+          </div>
+        </div>
+      </div>
+
+      <!-- Export -->
+      <div class="text-center">
+        <button class="bg-teal hover:bg-teal-dark text-navy px-12 py-4 rounded-xl font-semibold text-xl shadow-lg hover:shadow-xl transition-all duration-300">
+          📄 Download Optimized PDF
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // Demo data (replace with real API response)
+    const demoData = {
+      overall_score: 82,
+      subscores: {ats: 85, keywords: 78, readability: 90, formatting: 70, grammar: 95, impact: 65},
+      issues: [
+        {
+          id: "impact_001",
+          severity: "high",
+          section: "experience",
+          description: "Bullet lacks quantifiable impact",
+          confidence: 0.92,
+          rationale: "Recruiters scan for metrics first",
+          example_fix: "Led team → Led 12-person team to 40% efficiency gain"
+        },
+        {
+          id: "keywords_001", 
+          severity: "medium",
+          section: "skills",
+          description: "Missing key skills for target role",
+          confidence: 0.87,
+          rationale: "React.js appears in 78% of job descriptions",
+          example_fix: "Add React.js, Node.js to skills section"
+        }
+      ]
+    };
+
+    // Load results
+    window.addEventListener('load', () => {
+      const saved = localStorage.getItem('scanResult');
+      const data = saved ? JSON.parse(saved) : demoData;
+      
+      document.getElementById('loading').classList.add('hidden');
+      document.getElementById('results').classList.remove('hidden');
+      
+      // Set scores
+      document.getElementById('overallScore').textContent = data.overall_score;
+      document.documentElement.style.setProperty('--score', data.overall_score / 100);
+      
+      // Render issues
+      const issuesList = document.getElementById('issuesList');
+      data.issues.forEach(issue => {
+        issuesList.innerHTML += `
+          <div class="bg-white p-6 rounded-2xl shadow-lg border-l-4 border-${issue.severity === 'high' ? 'red' : issue.severity === 'medium' ? 'yellow' : 'green'}-500">
+            <div class="flex items-start justify-between mb-4">
+              <h4 class="font-semibold text-xl text-navy">${issue.description}</h4>
+              <span class="px-3 py-1 rounded-full text-xs font-medium bg-${issue.severity}-100 text-${issue.severity}-800">
+                ${issue.severity.toUpperCase()}
+              </span>
+            </div>
+            <p class="text-gray-600 mb-4">${issue.rationale}</p>
+            <div class="bg-gray-50 p-4 rounded-xl">
+              <p class="font-medium mb-2">💡 Suggested Fix:</p>
+              <p class="text-navy">${issue.example_fix}</p>
+            </div>
+            <div class="flex gap-2 mt-4">
+              <button class="flex-1 bg-teal text-white py-2 px-4 rounded-xl font-medium hover:bg-teal-dark transition">✅ Apply</button>
+              <button class="flex-1 border border-gray-300 py-2 px-4 rounded-xl font-medium hover:bg-gray-50 transition">❌ Ignore</button>
+            </div>
+          </div>
+        `;
+      });
+    });
+  </script>
+</body>
+</html>
